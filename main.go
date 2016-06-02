@@ -16,6 +16,7 @@ func main() {
 		dbPath string
 	)
 	flag.StringVar(&dbPath, "d", "arxiv.db", "Database path")
+	flag.Parse()
 	db, err := gorm.Open("sqlite3", dbPath)
 	if err != nil {
 		panic(err)
