@@ -1,21 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"github.com/Rompei/arxiv"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"io"
-	"os"
+	"io/ioutil"
+	"strings"
 )
 
 func main() {
 	var (
-		dbPath string
+		dbPath     string
+		genresPath string
 	)
 	flag.StringVar(&dbPath, "d", "arxiv.db", "Database path")
+	flag.StringVar(&genresPath, "g", "genres.txt", "Genres path")
+	flag.Parse()
 	db, err := gorm.Open("sqlite3", dbPath)
 	if err != nil {
 		panic(err)
@@ -28,18 +30,13 @@ func main() {
 	}
 	db.CreateTable(&arxiv.Author{})
 	db.CreateTable(&arxiv.Paper{})
-	a := arxiv.NewCrawler()
 
-	reader := bufio.NewReaderSize(os.Stdin, 4096)
-	for {
-		line, _, err := reader.ReadLine()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			panic(err)
-		}
-		a.AddGenre(string(line))
+	b, err := ioutil.ReadFile(genresPath)
+	if err != nil {
+		panic(err)
 	}
+	genres := strings.Split(strings.TrimRight(string(b), "\n"), "\n")
+	a := arxiv.NewCrawler(genres)
 
 	papersCh, errCh, doneCh := a.StartCrawl()
 
